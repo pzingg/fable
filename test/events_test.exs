@@ -9,7 +9,7 @@ defmodule Fable.EventsTest do
   end
 
   describe "emit/2" do
-    test "returns a zero arity callback with an schema as first argument" do
+    test "returns a 1-arity callback with a schema as first argument" do
       aggregate = %Aggregate{id: Ecto.UUID.generate()}
 
       fun =
@@ -17,7 +17,7 @@ defmodule Fable.EventsTest do
           %Aggregate.Created{}
         end)
 
-      assert is_function(fun, 0)
+      assert is_function(fun, 1)
     end
   end
 
