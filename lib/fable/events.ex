@@ -222,7 +222,6 @@ defmodule Fable.Events do
     |> Fable.Event.for_aggregate(agg)
     |> order_by(asc: :id)
     |> config.repo.all()
-    |> Enum.map(&Fable.Event.parse_data(config.repo, &1))
   end
 
   @doc false
@@ -304,12 +303,10 @@ defmodule Fable.Events do
 
   @spec handle(Fable.Event.t(), Fable.aggregate(), Fable.Config.t()) ::
           {:ok, Fable.aggregate()} | term
-  defp handle(event, aggregate, %{repo: repo} = config) do
+  defp handle(event, aggregate, config) do
     aggregate = %{aggregate | last_event_id: event.id}
 
-    event = Fable.Event.parse_data(repo, event)
-
-    case Map.fetch!(config.router.handlers(), Module.safe_concat([event.type])) do
+    case Map.fetch!(config.router.handlers(), event_module(event)) do
       functions when is_list(functions) ->
         reduce_while_ok(aggregate, functions, fn aggregate, function ->
           function.(aggregate, event.data)
@@ -320,9 +317,16 @@ defmodule Fable.Events do
     end
   end
 
+  defp event_module(event) do
+    # Retrieve event's module atom from data map's __type__ key
+    [Map.get(event.data, :__type__)]
+    |> Module.safe_concat()
+  end
+
   @spec generate(Fable.aggregate(), Fable.Event.t(), Fable.Config.t(), Keyword.t()) ::
           Ecto.Changeset.t()
-  defp generate(%schema{id: id, last_event_id: prev_event_id}, %type{} = event, config, opts) do
+  defp generate(%schema{id: id, last_event_id: prev_event_id}, event, config, opts) do
+    # data map includes event's module name in __type__ key
     data = Map.from_struct(event)
     table = schema.__schema__(:source)
 
@@ -330,7 +334,6 @@ defmodule Fable.Events do
       prev_event_id: prev_event_id,
       aggregate_table: table,
       aggregate_id: id,
-      type: to_string(type),
       version: 0,
       data: data,
       meta: Keyword.get(opts, :meta, %{})

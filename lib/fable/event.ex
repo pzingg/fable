@@ -7,7 +7,19 @@ defmodule Fable.Event do
   defmacro __using__(_) do
     quote do
       use Ecto.Schema
+      import Fable.Event, only: [event_type: 0]
+
       @primary_key false
+    end
+  end
+
+  @doc """
+  Macro to create required __type__ field  for the polymorphic data type
+  with the default name of module that "uses" Fable.Event.
+  """
+  defmacro event_type do
+    quote do
+      field :__type__, :string, default: to_string(__MODULE__)
     end
   end
 
@@ -17,10 +29,9 @@ defmodule Fable.Event do
     field(:prev_event_id, :integer)
     field(:aggregate_id, Ecto.UUID, null: false)
     field(:aggregate_table, :string, null: false)
-    field(:type, :string, null: false)
     field(:version, :integer, null: false)
     field(:meta, :map, default: %{})
-    field(:data, :map, default: %{})
+    field(:data, PolymorphicEmbed, types: :by_module, default: %{})
     field(:inserted_at, :utc_datetime, read_after_writes: true)
   end
 
@@ -33,37 +44,5 @@ defmodule Fable.Event do
 
     schema
     |> where(aggregate_table: ^table, aggregate_id: ^id)
-  end
-
-  def parse_data(repo, event) do
-    module = Module.safe_concat([event.type])
-    types = %{data: event_ecto_spec(module)}
-    %{data: data} = repo.load(types, {[:data], [event.data]})
-    %{event | data: data}
-  end
-
-  embed_structure =
-    if Fable.dependency_vsn_match?(:ecto, "~> 3.5") do
-      quote do
-        {:parameterized, Ecto.Embedded, var!(struct)}
-      end
-    else
-      quote do
-        {:embed, var!(struct)}
-      end
-    end
-
-  defp event_ecto_spec(module) do
-    struct = %Ecto.Embedded{
-      cardinality: :one,
-      field: :data,
-      on_cast: nil,
-      on_replace: :raise,
-      owner: __MODULE__,
-      related: module,
-      unique: true
-    }
-
-    unquote(embed_structure)
   end
 end

@@ -72,12 +72,15 @@ be moved to a different module by doing `use Fable.Events, router: MyApp.EventsR
 
 The two actions of the system are creating a blog post and updating a blog post.
 In the past tense this means we'll need a `PostCreated` and a `PostUpdated` event.
+Define the embedded schema attributes for these events, and make sure to include
+a `__type__` field for the event by including the `event_type()` macro. 
 
 ```elixir
 defmodule MyApp.Blog.Events.PostCreated do
   use Fable.Event
 
   embedded_schema do
+    event_type()
     field :title, :string
     field :body, :string
   end
@@ -87,6 +90,7 @@ defmodule MyApp.Blog.Events.PostUpdated do
   use Fable.Event
 
   embedded_schema do
+    event_type()
     field :title, :string
     field :body, :string
   end

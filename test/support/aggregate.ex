@@ -6,6 +6,8 @@ defmodule Fable.Test.Aggregate do
     use Fable.Event
 
     embedded_schema do
+      # Required field that holds the name of this module.
+      event_type()
     end
   end
 

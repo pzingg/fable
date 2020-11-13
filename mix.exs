@@ -46,9 +46,10 @@ defmodule Fable.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.21", only: [:dev]},
-      {:ecto_sql, "~> 3.2"},
-      {:postgrex, "~> 0.14"},
-      {:jason, "~> 1.1", optional: true}
+      {:ecto_sql, "~> 3.5"},
+      {:polymorphic_embed, github: "pzingg/polymorphic_embed", branch: "type-module-fun"},
+      {:postgrex, "~> 0.15"},
+      {:jason, "~> 1.2", optional: true}
     ]
   end
 end

@@ -215,7 +215,6 @@ defmodule Fable.ProcessManager do
     Handler #{state.handler.name} handling: #{inspect(event)}
     """)
 
-    event = Fable.Event.parse_data(state.repo, event)
     apply(state.handler.module, :handle_event, [event.data, state.handler.state])
   rescue
     e ->
